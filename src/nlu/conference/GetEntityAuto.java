@@ -19,7 +19,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.sun.corba.se.impl.encoding.OSFCodeSetRegistry.Entry;
+
 import config.Config;
+import sun.launcher.resources.launcher;
 
 //排序
 class EntitySpanSort implements Comparator<EntitySpan> {
@@ -52,20 +55,39 @@ public class GetEntityAuto {
 	private static HashMap<String, String> unitMap;
 
 	private static HashMap<String, String> unitaddMap;
+	
+	private static Map<String, String> dict = null;
 
 	private static void init() {
 		if (treeMap == null) {
 			treeMap = new HashMap<String, PosterWordTree>();
-			File file = new File(Config.get("entityInputDir"));
-			File list[] = file.listFiles();
-			for (File f : list) {
-				if (f.isDirectory())
-					continue;
-				String name = f.getName();
-				name = name.substring(0, name.indexOf(".txt"));
-				PosterWordTree tree = new PosterWordTree(
-						PosterWordTree.genWords(f.getAbsolutePath()), name);
-				treeMap.put(name, tree);
+			if (dict == null) {
+				File file = new File(Config.get("entityInputDir"));
+				File list[] = file.listFiles();
+				for (File f : list) {
+					if (f.isDirectory())
+						continue;
+					String name = f.getName();
+					name = name.substring(0, name.indexOf(".txt"));
+					PosterWordTree tree = new PosterWordTree(
+							PosterWordTree.genWords(f.getAbsolutePath()), name);
+					treeMap.put(name, tree);
+				}
+			} else {
+				Iterator<Map.Entry<String, String>> ite = dict.entrySet().iterator();
+				while (ite.hasNext()) {
+					Map.Entry<String, String> entry = ite.next();
+					String key = entry.getKey(), value = entry.getValue();
+					String name = key;
+					String[] slist = value.trim().split("\n");
+					ArrayList<String> words = new ArrayList<>();
+					for (int i = 0; i < slist.length; i ++) {
+						words.add(slist[i].trim());
+					}
+					PosterWordTree tree = new PosterWordTree(
+							PosterWordTree.genWords(words), name);
+					treeMap.put(name, tree);
+				}
 			}
 		}
 		if (treeMapValue == null) {
@@ -355,6 +377,31 @@ public class GetEntityAuto {
 		ArrayList<String> ret = getResultList(input, spamList);
 		return ret;
 	}
+	
+	// 获取spam信息，得到所有可能方案
+		public static ArrayList<String> getEntityList(String input, Map<String, String> worddict) {
+			dict = worddict;
+			init();
+			input = input.toLowerCase().trim();
+			ArrayList<EntitySpan> spamList = new ArrayList<EntitySpan>();
+
+			// 遍历HashMap，得到spam信息
+			Iterator<Map.Entry<String, PosterWordTree>> iter = treeMap.entrySet()
+					.iterator();
+			while (iter.hasNext()) {
+				Map.Entry<String, PosterWordTree> entry = (Map.Entry<String, PosterWordTree>) iter
+						.next();
+				String name = (String) entry.getKey();
+				PosterWordTree tree = (PosterWordTree) entry.getValue();
+				String tmp = PosterWordTree.detect(input, tree);
+				getSpam(tmp, input, name, spamList);
+			}
+
+			// spamlist按start由大到小排序
+			Collections.sort(spamList, new EntitySpanSort());
+			ArrayList<String> ret = getResultList(input, spamList);
+			return ret;
+		}
 
 	// 得到Entity spam
 	private static void getSpam(String tmp, String input, String type,

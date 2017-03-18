@@ -10,6 +10,7 @@ package nlu.conference;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -119,6 +120,14 @@ public class PosterWordTree {
 			reader.close();
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+		return words;
+	}
+	
+	public static Set<String> genWords(ArrayList<String> words0) {
+		Set<String> words = new HashSet<String>();
+		for (String line : words0) {
+			words.add(line.trim().toLowerCase());
 		}
 		return words;
 	}

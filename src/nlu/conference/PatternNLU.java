@@ -68,11 +68,13 @@ public class PatternNLU implements NLUUnit {
 	private static ArrayList<String> fuzzywords;
 	
 	private static HashMap<String, String> aliasdic;
+	
+	private static Map<String, String> dict;
 
 	// 构造函数，初始化
-	public PatternNLU(String patternStr) {
+	public PatternNLU(String patternStr, Map<String, String> worddict) {
 		
-		
+		dict = worddict;
 //		patternList = PatternDAO.getInstance().getCombine();
 //		Collections.sort(patternList, new PatternSort());
 		
@@ -116,7 +118,7 @@ public class PatternNLU implements NLUUnit {
 			return ret;
 
 		// 名词实体识别，2^n
-		ArrayList<String> inputList = GetEntityAuto.getEntityList(inputStr);
+		ArrayList<String> inputList = GetEntityAuto.getEntityList(inputStr, dict);
 		int best = 0;
 		// 遍历每一种可能性
 		for (int i = inputList.size() - 1; i >= 0; i--) {
@@ -630,7 +632,8 @@ public class PatternNLU implements NLUUnit {
 
 	public static void main(String args[]) {
 		String patternStr = "";
-		PatternNLU nlu = new PatternNLU(patternStr);
+		HashMap<String, String> map = new HashMap<String, String>();
+		PatternNLU nlu = new PatternNLU(patternStr, map);
 
 		ArrayList<String> inputList = new ArrayList<String>();
 		String input = "你好么";
